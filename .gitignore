@@ -1,0 +1,20 @@
+# Dependencies
+__pycache__/
+*.pyc
+
+# Sensitive / runtime data
+.env
+twikit_cookies.json
+tweet_state.json
+data/
+
+# Logs
+*.log
+data/*.log
+
+# Lock file
+tweet_bot.lock
+
+# IDE
+.vscode/
+.idea/
