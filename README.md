@@ -1,85 +1,85 @@
 # 🐦 Tweet Forward Bot
 
-Bot Python tự động theo dõi các tài khoản X (Twitter) và forward tweet mới sang Telegram channel — kèm **full text** + **ảnh**.
+A Python bot that automatically monitors X (Twitter) accounts and forwards new tweets to a Telegram channel — with **full text** + **images**.
 
-## ✨ Tính năng
+## ✨ Features
 
-- 🔄 Tự động quét tweet mới mỗi 2 phút
-- 📸 Gửi kèm ảnh (1 ảnh hoặc album nhiều ảnh)
-- 📝 Lấy **full text** cho tweet dài (Premium/Blue)
-- 🔒 Escape HTML an toàn cho Telegram
-- 💾 Lưu state tránh gửi trùng, tự bắt kịp tweet miss khi restart
-- 🪟 Chạy ngầm trên Windows (VBS + pythonw)
-- 🔐 Single-instance lock chống chạy trùng
+- 🔄 Auto-scans for new tweets every 2 minutes
+- 📸 Sends photos (single or album) alongside tweet text
+- 📝 Fetches **full text** for long tweets (Premium/Blue users)
+- 🔒 HTML-safe escaping for Telegram parse mode
+- 💾 State persistence to avoid duplicate sends & auto-catches missed tweets on restart
+- 🪟 Runs silently on Windows (VBS + pythonw)
+- 🔐 Single-instance lock to prevent duplicate processes
 
-## 📋 Yêu cầu
+## 📋 Prerequisites
 
 - Python 3.10+
-- Tài khoản X (Twitter) — dùng tài khoản phụ, **không dùng tài khoản chính**
+- An X (Twitter) account — use a **throwaway account**, not your main one
 - Telegram Bot Token + Chat ID
 
-## 🚀 Cài đặt
+## 🚀 Setup
 
 ```bash
-# 1. Clone repo
-git clone https://github.com/YOUR_USERNAME/TweetBot.git
+# 1. Clone the repo
+git clone https://github.com/xuanhoang0299/TweetBot.git
 cd TweetBot
 
-# 2. Cài dependencies
+# 2. Install dependencies
 pip install -r requirements.txt
 
-# 3. Cấu hình
+# 3. Configure environment
 cp .env.example .env
-# Sửa .env với token và credentials của bạn
+# Edit .env with your tokens and credentials
 
-# 4. Patch twikit (BẮT BUỘC — xem mục bên dưới)
+# 4. Patch twikit (REQUIRED — see section below)
 
-# 5. Lấy cookies X.com
+# 5. Import X.com cookies
 python import_x_cookies.py
 
-# 6. Chạy bot
+# 6. Run the bot
 python tweet_forward_bot.py
 ```
 
-## 🍪 Lấy cookies X.com
+## 🍪 Getting X.com Cookies
 
-Do Cloudflare chặn login tự động, bot dùng cookies từ Chrome:
+Since Cloudflare blocks automated logins, the bot authenticates using browser cookies:
 
-1. Mở Chrome → vào **x.com** (đã đăng nhập)
-2. Nhấn **F12** → tab **Application** → Cookies → `https://x.com`
-3. Copy giá trị của: `auth_token`, `ct0`, `twid`
-4. Chạy `python import_x_cookies.py` → paste từng giá trị
+1. Open Chrome → go to **x.com** (must be logged in)
+2. Press **F12** → go to **Application** tab → Cookies → `https://x.com`
+3. Copy the values of: `auth_token`, `ct0`, `twid`
+4. Run `python import_x_cookies.py` → paste each value when prompted
 
-## 🔧 Patch twikit (bắt buộc)
+## 🔧 Patching twikit (Required)
 
-Twikit 2.3.3 cần 2 patch thủ công do X thay đổi API:
+twikit 2.3.3 requires 2 manual patches due to X API changes:
 
-### Patch 1: `transaction.py` (fix lỗi KEY_BYTE indices)
+### Patch 1: `transaction.py` — Fixes `KEY_BYTE indices` error
 
-File: `site-packages/twikit/x_client_transaction/transaction.py`
+**File:** `site-packages/twikit/x_client_transaction/transaction.py`
 
-Thêm regex mới để hỗ trợ webpack chunk format:
+Add a new regex to support the modern webpack chunk format:
 ```python
 CHUNK_NAME_REGEX = re.compile(r'"ondemand\.s"\s*:\s*"([a-f0-9]+)"')
 ```
-Và fallback logic trong `get_indices()` method.
+And add fallback logic in the `get_indices()` method.
 
-### Patch 2: `user.py` (fix KeyError)
+### Patch 2: `user.py` — Fixes `KeyError` crashes
 
-File: `site-packages/twikit/user.py`
+**File:** `site-packages/twikit/user.py`
 
-Đổi tất cả `legacy['key']` → `legacy.get('key', default)` trong `__init__`.
+Replace all `legacy['key']` with `legacy.get('key', default)` in `User.__init__`.
 
-## 📁 Cấu trúc
+## 📁 Project Structure
 
 ```
 TweetBot/
-├── tweet_forward_bot.py     # Bot chính
-├── import_x_cookies.py      # Tool nhập cookies từ DevTools
-├── export_x_cookies.py      # Tool xuất cookies từ Chrome
+├── tweet_forward_bot.py          # Main bot
+├── import_x_cookies.py           # Import cookies from Chrome DevTools
+├── export_x_cookies.py           # Export cookies directly from Chrome
 ├── scripts/
-│   └── run_tweet_bot_hidden.vbs  # Chạy ngầm Windows
-├── data/                    # Runtime data (gitignored)
+│   └── run_tweet_bot_hidden.vbs  # Silent Windows launcher
+├── data/                         # Runtime data (gitignored)
 │   ├── twikit_cookies.json
 │   ├── tweet_state.json
 │   └── tweet_bot.log
@@ -88,13 +88,13 @@ TweetBot/
 └── README.md
 ```
 
-## 🪟 Tự động chạy khi Windows khởi động
+## 🪟 Auto-start on Windows Boot
 
-1. Tạo shortcut đến `scripts/run_tweet_bot_hidden.vbs`
-2. Copy shortcut vào `shell:startup`
+1. Create a shortcut to `scripts/run_tweet_bot_hidden.vbs`
+2. Place the shortcut in `shell:startup`
 
-## ⚠️ Lưu ý
+## ⚠️ Important Notes
 
-- **Không dùng tài khoản X chính** — scraping vi phạm ToS, tài khoản có thể bị ban
-- **Cookies sống vài tháng** — khi hết hạn chạy lại `import_x_cookies.py`
-- **Không upgrade twikit** — `pip install --upgrade twikit` sẽ ghi đè patches
+- **Do NOT use your main X account** — scraping violates X's ToS and may result in a ban
+- **Cookies last several months** — when they expire, re-run `import_x_cookies.py`
+- **Do NOT upgrade twikit** — `pip install --upgrade twikit` will overwrite the required patches
